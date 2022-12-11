@@ -1,5 +1,5 @@
 public class ServerMain {
     public static void main(String[] args) {
-        new Gui().start();
+        new ServerGui().start();
     }
 }

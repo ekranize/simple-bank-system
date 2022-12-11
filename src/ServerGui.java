@@ -3,7 +3,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-public class Gui {
+public class ServerGui {
     private JButton startServerButton;
     private JButton stopServerButton;
     private JTextField portNumField;
