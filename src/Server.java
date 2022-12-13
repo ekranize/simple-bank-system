@@ -1,8 +1,11 @@
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketTimeoutException;
+import java.security.MessageDigest;
 
 public class Server {
     private ServerSocket serverSocket;
@@ -11,7 +14,8 @@ public class Server {
     public void startServer (int portNum) {
         try {
             serverSocket = new ServerSocket(portNum);
-            serverThread = new Thread(new ServerHandler(serverSocket));
+            serverSocket.setSoTimeout(2000);
+            serverThread = new Thread(new ServerHandler());
             serverThread.start();
             System.out.println("Server started on port " + portNum);
         } catch (Exception ex) {
@@ -23,8 +27,6 @@ public class Server {
     public void stopServer () {
         try {
             serverThread.interrupt();
-            serverSocket = null;
-            System.out.println("Server stopped");
         } catch (Exception ex) {
             ex.printStackTrace();
         }
@@ -34,45 +36,55 @@ public class Server {
     public boolean isStarted() {
         return isStarted;
     }
-    class ClientHandler implements Runnable {
+    static class ClientHandler implements Runnable {
         BufferedReader reader;
         Socket sock;
         public ClientHandler(Socket clientSocket) {
+            sock = clientSocket;
+        }
+        public void run() {
             try {
-                sock = clientSocket;
+                String message;
                 InputStreamReader isReader = new InputStreamReader(sock.getInputStream());
+                PrintWriter writer = new PrintWriter(sock.getOutputStream());
                 reader = new BufferedReader(isReader);
+                message = reader.readLine();
+                System.out.println("Read request \"" + message + "\"");
+                writer.println(requestProcessing(message));
+                writer.flush();
+                sock.close();
+                System.out.println("Connection closed");
             } catch (Exception ex) {
                 ex.printStackTrace();
             }
         }
-        public void run() {
-            String message;
-            try {
-                while ((message = reader.readLine()) != null) {
-                    System.out.println("read " + message);
-                }
-            } catch (Exception ex) {
-                ex.printStackTrace();
-            }
+        private String requestProcessing(String request) {
+            String[] requestArray = request.split(";");
+            return "Your request is: Name-" + requestArray[0] + "; passwordMD5-" + requestArray[1] + "; action-" + requestArray[2];
         }
     }
     class ServerHandler implements Runnable {
-        private ServerSocket serverSocket;
-        public ServerHandler(ServerSocket serverSocket) {
-            this.serverSocket = serverSocket;
-        }
         @Override
         public void run() {
             try {
-                while (true) {
+                while (!serverSocket.isClosed()) {
                     Socket clientSocket = serverSocket.accept();
-                    //PrintWriter writer = new PrintWriter(clientSocket.getOutputStream());
                     Thread t = new Thread(new ClientHandler(clientSocket));
                     t.start();
                     System.out.println("Got a connection");
                 }
-            } catch (Exception ex) {
+            } catch (SocketTimeoutException stoEx) {
+                if (!serverThread.isInterrupted()) run();
+                else {
+                    try {
+                        serverSocket.close();
+                        System.out.println("Server stopped (interrupted)");
+                    } catch (IOException ioEx) {
+                        ioEx.printStackTrace();
+                    }
+                }
+            }
+            catch (Exception ex) {
                 ex.printStackTrace();
             }
         }
