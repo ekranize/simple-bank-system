@@ -60,7 +60,7 @@ public class Server {
         }
         private String requestProcessing(String request) {
             String[] requestArray = request.split(";");
-            return "Your request is: Name-" + requestArray[0] + "; passwordMD5-" + requestArray[1] + "; action-" + requestArray[2];
+            return "Your request is: " + requestArray[0] + ";" + requestArray[1] + ";" + requestArray[2];
         }
     }
     class ServerHandler implements Runnable {
