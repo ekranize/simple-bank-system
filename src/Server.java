@@ -5,13 +5,14 @@ import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
-import java.security.MessageDigest;
 
 public class Server {
     private ServerSocket serverSocket;
     private Thread serverThread;
     private boolean isStarted = false;
-    public void startServer (int portNum) {
+    private String encryptPass;
+    public void startServer (int portNum, String encryptPass) {
+        this.encryptPass = encryptPass;
         try {
             serverSocket = new ServerSocket(portNum);
             serverSocket.setSoTimeout(2000);
@@ -36,7 +37,7 @@ public class Server {
     public boolean isStarted() {
         return isStarted;
     }
-    static class ClientHandler implements Runnable {
+    class ClientHandler implements Runnable {
         BufferedReader reader;
         Socket sock;
         public ClientHandler(Socket clientSocket) {
@@ -49,9 +50,10 @@ public class Server {
                 PrintWriter writer = new PrintWriter(sock.getOutputStream());
                 reader = new BufferedReader(isReader);
                 message = reader.readLine();
-                System.out.println("Read request \"" + message + "\"");
                 writer.println(requestProcessing(message));
                 writer.flush();
+                reader.close();
+                writer.close();
                 sock.close();
                 System.out.println("Connection closed");
             } catch (Exception ex) {
@@ -59,8 +61,19 @@ public class Server {
             }
         }
         private String requestProcessing(String request) {
-            String[] requestArray = request.split(";");
-            return "Your request is: " + requestArray[0] + ";" + requestArray[1] + ";" + requestArray[2];
+            System.out.println("Read request " + request);
+            String decryptedRequest = Helper.decrypt(request,encryptPass);
+            System.out.println("Decrypted request " + decryptedRequest);
+            String[] requestArray = decryptedRequest.split(";");
+            StringBuilder response = new StringBuilder();
+            for (String s : requestArray) {
+                response.append(s).append(";");
+            }
+            if (!response.toString().equals("") && requestArray[0].equals("simple-bank-system")) {
+                return response.toString();
+            } else return "Empty or bad request";
+
+
         }
     }
     class ServerHandler implements Runnable {
@@ -89,4 +102,5 @@ public class Server {
             }
         }
     }
+
 }
