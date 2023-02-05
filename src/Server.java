@@ -66,15 +66,36 @@ public class Server {
             String decryptedRequest = Helper.decrypt(request,encryptPass); //расшифровываем запрос
             System.out.println("Decrypted request " + decryptedRequest);  // выводим в консоль расшифрованный запрос
             String[] requestArray = decryptedRequest.split(";"); //разбиваем запрос на лексемы - части запроса
-            StringBuilder response = new StringBuilder(); //создаем новый StringBuilder для запроса
-            for (String s : requestArray) {
-                response.append(s).append(";"); //добавляем все части запроса в StringBuilder
+            if (requestArray.length != 0) {
+                if (requestArray[0].equals("simple-bank-system")) {
+                    if (requestArray[3].equals("registration") && registerClient(requestArray[1], requestArray[2])) {
+                        return "Registration - OK";
+                    } else if (checkAuth(requestArray[1], requestArray[2])) {
+                        System.out.println("Authorization success");
+                        switch (requestArray[3]) {
+                            case "test connection" -> {
+                                System.out.println("test connection case");
+                                return "Connection tested - OK";}
+                            case "password changing" -> {
+                                System.out.println("password changing case");
+                                return "password changing case";}
+                            case "money transaction" -> {
+                                System.out.println("money transaction case");
+                                return "money transaction case";}
+                            default -> {
+                                System.out.println("Wrong parameter");
+                                return "Wrong parameter";}
+                        }
+                    }
+                } else return "Bad request";
             }
-            if (!response.toString().equals("") && requestArray[0].equals("simple-bank-system")) { //если запрос оказался не пустым и первая лексема запроса такая, как нам нужно
-                return response.toString(); //снова совмещаем запрос в одну строку и возвращаем ее
-            } else return "Empty or bad request";
-
-
+            return "Empty request";
+        }
+        private boolean registerClient (String userName, String passHash) {
+            return !userName.equals(passHash); // (заглушка)
+        }
+        private boolean checkAuth (String userName, String passHash) {
+            return !userName.equals(passHash); // (заглушка)
         }
     }
     class ServerHandler implements Runnable { //вложенный класс, содержащий задачу для серверного потока

@@ -14,7 +14,7 @@ public class ServerGui {
         Font bigFont = new Font("sanserif", Font.BOLD,18); //шрифт
         JPanel mainPanel = new JPanel(); //главная панель в окне приложения
         mainPanel.setLayout(null); //убираем компоновщик в главной панели - будем размещать элементы вручную по координатам
-        JLabel portNumLabel = new JLabel("Server socket port number "); //надпись
+        JLabel portNumLabel = new JLabel("Server socket port number (1025-65536"); //надпись
         portNumLabel.setBounds(70, 50, 160, 30); //положение и размеры
         portNumField = new JTextField(5); //размер поля в условных "колонках"
         portNumField.setBounds(80, 80, 140, 20); //положение и размеры
@@ -51,7 +51,10 @@ public class ServerGui {
     class startServerListener implements ActionListener { //вложенный класс для метода по нажатию кнопки старта сервера
         @Override
         public void actionPerformed(ActionEvent e) { //метод по нажатию кнопки старта сервера
-            if (portNumField.getText().matches("[-+]?\\d+") && !server.isStarted()) { //если с введенным номером порта все в порядке и сервер еще не запущен
+            if (portNumField.getText().matches("[-+]?\\d+")
+                    && Integer.parseInt(portNumField.getText()) <= 65536
+                    && Integer.parseInt(portNumField.getText()) >=1025
+                    && !server.isStarted()) { //если с введенным номером порта все в порядке и сервер еще не запущен
                 server.startServer(Integer.parseInt(portNumField.getText()),encryptPassField.getText()); //запускаем метод старта сервера
                 startServerButton.setEnabled(false); //делаем кнопку старта сервера неактивной
                 stopServerButton.setEnabled(true); //делаем кнопку остановки сервера активной

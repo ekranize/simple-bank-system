@@ -5,15 +5,15 @@ import java.awt.event.ActionListener;
 //класс для создания графического интерфейса клиентского приложения
 public class ClientGui {
     private Client client; //ссылка на экземпляр класса клиента
+    private JTextField encryptPassField; //поле с паролем шифрования
+    private JTextField portNumField; //поле с номером порта для соединения к серверу
+    private JTextField userNameField; //поле с именем пользователя
+    private JTextField passwordField; //поле с паролем пользователя
     public void start() {
+        JTextField responseField; //поле для отображения ответа от сервера
         JButton registrationButton; //кнопка регистрации в системе
         JButton changePassButton; //кнопка смены пароля
         JButton testConnectionButton; //кнопка теста соединения
-        JTextField portNumField; //поле с номером порта для соединения к серверу
-        JTextField encryptPassField; //поле с паролем шифрования
-        JTextField userNameField; //поле с именем пользователя
-        JTextField passwordField; //поле с паролем пользователя
-        JTextField responseField; //поле для отображения ответа от сервера
         JFrame frame = new JFrame("SBS - Client"); //окно приложения
         Font bigFont = new Font("sanserif", Font.BOLD,14); //шрифт
         JPanel mainPanel = new JPanel(); //главная панель в окне приложения
@@ -79,19 +79,19 @@ public class ClientGui {
     class testConnectionListener implements ActionListener { //вложенный класс для метода по нажатию кнопки теста соединения
         @Override
         public void actionPerformed(ActionEvent e) { //метод по нажатию кнопки теста соединения
-            client.testConnection();
+            client.sendRequest(Integer.parseInt(portNumField.getText()), userNameField.getText(), passwordField.getText(), encryptPassField.getText(), "test connection");
         }
     }
-    static class registrationListener implements ActionListener { //вложенный класс для метода по нажатию кнопки регистрации
+    class registrationListener implements ActionListener { //вложенный класс для метода по нажатию кнопки регистрации
         @Override
         public void actionPerformed(ActionEvent e) { //метод по нажатию кнопки регистрации
-            System.out.println("Registration Listener pressed");
+            client.sendRequest(Integer.parseInt(portNumField.getText()), userNameField.getText(), passwordField.getText(), encryptPassField.getText(), "registration");
         }
     }
-    static class changePassListener implements ActionListener { //вложенный класс для метода по нажатию кнопки смены пароля
+    class changePassListener implements ActionListener { //вложенный класс для метода по нажатию кнопки смены пароля
         @Override
         public void actionPerformed(ActionEvent e) { //метод по нажатию кнопки смены пароля
-            System.out.println("Change Password Listener pressed");
+            client.sendRequest(Integer.parseInt(portNumField.getText()), userNameField.getText(), passwordField.getText(), encryptPassField.getText(), "password changing");
         }
     }
 }
