@@ -5,93 +5,94 @@ import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
-
+//класс банковского сервера
 public class Server {
-    private ServerSocket serverSocket;
-    private Thread serverThread;
-    private boolean isStarted = false;
-    private String encryptPass;
-    public void startServer (int portNum, String encryptPass) {
+    private ServerSocket serverSocket; //ссылка на экземпляр серверного сокета
+    private Thread serverThread; //ссылка на экземпляр серверного потока
+    private boolean isStarted = false; //признак работы сервера (запущен/остановлен)
+    private String encryptPass; //строка с паролем для шифрования трафика
+    public void startServer (int portNum, String encryptPass) { //метод для запуска сервера, на входе - пароль для шифрования трафика и номер серверного порта
         this.encryptPass = encryptPass;
         try {
-            serverSocket = new ServerSocket(portNum);
-            serverSocket.setSoTimeout(2000);
-            serverThread = new Thread(new ServerHandler());
-            serverThread.start();
-            System.out.println("Server started on port " + portNum);
+            serverSocket = new ServerSocket(portNum); //открываем серверный сокет на нужном порту
+            serverSocket.setSoTimeout(2000); //таймаут ожидания подключения ???
+            serverThread = new Thread(new ServerHandler()); //открываем серверный поток
+            serverThread.start(); //запускаем серверный поток
+            System.out.println("Server started on port " + portNum); //сообщаем в консоли о запуске сервера
         } catch (Exception ex) {
             ex.printStackTrace();
         }
 
-        isStarted = true;
+        isStarted = true; //выставляем признак запуска сервера - запущен
     }
-    public void stopServer () {
+    public void stopServer () { //метод для останова сервера
         try {
-            serverThread.interrupt();
+            serverThread.interrupt(); //прерываем серверныый поток
         } catch (Exception ex) {
             ex.printStackTrace();
         }
-        isStarted = false;
+        isStarted = false; //выставляем признак запуска сервера - остановлен
     }
 
-    public boolean isStarted() {
+    public boolean isStarted() { //метод для проверки признака запуска сервера
         return isStarted;
     }
-    class ClientHandler implements Runnable {
-        BufferedReader reader;
-        Socket sock;
-        public ClientHandler(Socket clientSocket) {
+    class ClientHandler implements Runnable { //вложенный класс, содержащий задачу для клиентского потока
+        BufferedReader reader; //ссылка на экземпляр класса для чтения данных из сокета
+        Socket sock; //ссылка на экземпляр класса клиентского сокета
+        public ClientHandler(Socket clientSocket) { //конструктор вложенного класса, на входе - сокет клиента
             sock = clientSocket;
         }
-        public void run() {
+        public void run() { //метод - задача для клиентского потока
             try {
-                String message;
-                InputStreamReader isReader = new InputStreamReader(sock.getInputStream());
-                PrintWriter writer = new PrintWriter(sock.getOutputStream());
-                reader = new BufferedReader(isReader);
-                message = reader.readLine();
-                writer.println(requestProcessing(message));
-                writer.flush();
-                reader.close();
-                writer.close();
-                sock.close();
-                System.out.println("Connection closed");
+                String message; //строка - сообщение от клиента
+                InputStreamReader isReader = new InputStreamReader(sock.getInputStream()); //создаем экземпляр класса для чтения потока данных из сокета
+                PrintWriter writer = new PrintWriter(sock.getOutputStream()); //создаем экземпляр класса для записи данных в сокет
+                reader = new BufferedReader(isReader); //создаем экземпляр класса для чтения данных из сокета
+                message = reader.readLine(); //читаем в строку поступившее от клиента сообщение/запрос
+                writer.println(requestProcessing(message)); //отправляем сообщение/запрос на обработку отдельным методом и пишем в сокет ответ
+                writer.flush(); //принудительно отправляем в сокет то, что записали выше
+                reader.close(); //закрываем чтение данных из сокета
+                isReader.close(); //закрываем чтение потока данных из сокета
+                writer.close(); //закрываем запись данных из сокета
+                sock.close(); //закрываем сокет
+                System.out.println("Connection closed");  // выводим в консоль сообщение о закрытии соединения с данным клиентом
             } catch (Exception ex) {
                 ex.printStackTrace();
             }
         }
-        private String requestProcessing(String request) {
-            System.out.println("Read request " + request);
-            String decryptedRequest = Helper.decrypt(request,encryptPass);
-            System.out.println("Decrypted request " + decryptedRequest);
-            String[] requestArray = decryptedRequest.split(";");
-            StringBuilder response = new StringBuilder();
+        private String requestProcessing(String request) { //метод для обработки сообщения/запроса клиента, на входе - сообщение/запрос
+            System.out.println("Read request " + request);  // выводим в консоль сообщение/запрос
+            String decryptedRequest = Helper.decrypt(request,encryptPass); //расшифровываем запрос
+            System.out.println("Decrypted request " + decryptedRequest);  // выводим в консоль расшифрованный запрос
+            String[] requestArray = decryptedRequest.split(";"); //разбиваем запрос на лексемы - части запроса
+            StringBuilder response = new StringBuilder(); //создаем новый StringBuilder для запроса
             for (String s : requestArray) {
-                response.append(s).append(";");
+                response.append(s).append(";"); //добавляем все части запроса в StringBuilder
             }
-            if (!response.toString().equals("") && requestArray[0].equals("simple-bank-system")) {
-                return response.toString();
+            if (!response.toString().equals("") && requestArray[0].equals("simple-bank-system")) { //если запрос оказался не пустым и первая лексема запроса такая, как нам нужно
+                return response.toString(); //снова совмещаем запрос в одну строку и возвращаем ее
             } else return "Empty or bad request";
 
 
         }
     }
-    class ServerHandler implements Runnable {
+    class ServerHandler implements Runnable { //вложенный класс, содержащий задачу для серверного потока
         @Override
-        public void run() {
+        public void run() { //метод - задача для серверного потока
             try {
-                while (!serverSocket.isClosed()) {
-                    Socket clientSocket = serverSocket.accept();
-                    Thread t = new Thread(new ClientHandler(clientSocket));
-                    t.start();
-                    System.out.println("Got a connection");
+                while (!serverSocket.isClosed()) { //пока серверный сокет не закрыт
+                    Socket clientSocket = serverSocket.accept(); //принимаем соединение от очередного клиента
+                    Thread t = new Thread(new ClientHandler(clientSocket)); //создаем отдельный клиентский поток для работы с каждым клиентом отдельно
+                    t.start(); //стартуем клиентский поток
+                    System.out.println("Got a connection"); //выводим в консоль сообщение об установлении соединения с клиентом
                 }
-            } catch (SocketTimeoutException stoEx) {
-                if (!serverThread.isInterrupted()) run();
-                else {
+            } catch (SocketTimeoutException stoEx) { //таймаут серверного сокета сработал?
+                if (!serverThread.isInterrupted()) run(); //если серверный поток не прерван - стартуем еще раз задачу для серверного потока
+                else { //иначе
                     try {
-                        serverSocket.close();
-                        System.out.println("Server stopped (interrupted)");
+                        serverSocket.close(); //закрываем к чертям серверный сокет
+                        System.out.println("Server stopped (interrupted)"); //выводим в консоль сообщение о том, что сервер преван (поток прерван)
                     } catch (IOException ioEx) {
                         ioEx.printStackTrace();
                     }

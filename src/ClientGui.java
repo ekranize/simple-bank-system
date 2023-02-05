@@ -2,58 +2,59 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-
+//класс для создания графического интерфейса клиентского приложения
 public class ClientGui {
-    private Client client;
+    private Client client; //ссылка на экземпляр класса клиента
     public void start() {
-        JButton registrationButton;
-        JButton changePassButton;
-        JButton testConnectionButton;
-        JTextField portNumField;
-        JTextField encryptPassField;
-        JTextField userNameField;
-        JTextField passwordField;
-        JTextField responseField;
-        JFrame frame = new JFrame("SBS - Client");
-        Font bigFont = new Font("sanserif", Font.BOLD,14);
-        JPanel mainPanel = new JPanel();
-        mainPanel.setLayout(null);
-        JLabel portNumLabel = new JLabel("Server socket port number ");
-        portNumLabel.setBounds(70, 10, 160, 30);
-        portNumField = new JTextField(5);
-        portNumField.setBounds(80, 40, 140, 20);
-        portNumField.setText("12021");
-        JLabel encryptPassLabel = new JLabel("Server encrypt pass ");
-        encryptPassLabel.setBounds(90, 60, 160, 30);
-        encryptPassField = new JTextField(10);
-        encryptPassField.setBounds(80, 90, 140, 20);
-        encryptPassField.setText("testPass");
-        JLabel userNameLabel = new JLabel("User name");
-        userNameLabel.setBounds(100, 110, 160, 30);
-        userNameField = new JTextField(5);
-        userNameField.setBounds(80, 140, 140, 20);
-        userNameField.setText("user1");
-        JLabel passwordLabel = new JLabel("User password");
-        passwordLabel.setBounds(90, 160, 160, 30);
-        passwordField = new JTextField(5);
-        passwordField.setBounds(80, 190, 140, 20);
-        passwordField.setText("password1");
-        responseField = new JTextField(50);
-        responseField.setBounds(10, 230, 260, 20);
-        responseField.setText("");
-        responseField.setEnabled(false);
+        JButton registrationButton; //кнопка регистрации в системе
+        JButton changePassButton; //кнопка смены пароля
+        JButton testConnectionButton; //кнопка теста соединения
+        JTextField portNumField; //поле с номером порта для соединения к серверу
+        JTextField encryptPassField; //поле с паролем шифрования
+        JTextField userNameField; //поле с именем пользователя
+        JTextField passwordField; //поле с паролем пользователя
+        JTextField responseField; //поле для отображения ответа от сервера
+        JFrame frame = new JFrame("SBS - Client"); //окно приложения
+        Font bigFont = new Font("sanserif", Font.BOLD,14); //шрифт
+        JPanel mainPanel = new JPanel(); //главная панель в окне приложения
+        mainPanel.setLayout(null); //убираем компоновщик в главной панели - будем размещать элементы вручную по координатам
+        JLabel portNumLabel = new JLabel("Server socket port number "); //надпись
+        portNumLabel.setBounds(70, 10, 160, 30); //положение и размеры
+        portNumField = new JTextField(5); //размер поля в условных "колонках"
+        portNumField.setBounds(80, 40, 140, 20); //положение и размеры
+        portNumField.setText("12021"); //текст в поле
+        JLabel encryptPassLabel = new JLabel("Server encrypt pass "); //надпись
+        encryptPassLabel.setBounds(90, 60, 160, 30); //положение и размеры
+        encryptPassField = new JTextField(10); //размер поля в условных "колонках"
+        encryptPassField.setBounds(80, 90, 140, 20); //положение и размеры
+        encryptPassField.setText("testPass"); //текст в поле
+        JLabel userNameLabel = new JLabel("User name"); //надпись
+        userNameLabel.setBounds(100, 110, 160, 30); //положение и размеры
+        userNameField = new JTextField(5); //размер поля в условных "колонках"
+        userNameField.setBounds(80, 140, 140, 20); //положение и размеры
+        userNameField.setText("user1"); //текст в поле
+        JLabel passwordLabel = new JLabel("User password"); //надпись
+        passwordLabel.setBounds(90, 160, 160, 30); //положение и размеры
+        passwordField = new JTextField(5); //размер поля в условных "колонках"
+        passwordField.setBounds(80, 190, 140, 20); //положение и размеры
+        passwordField.setText("password1"); //текст в поле
+        responseField = new JTextField(50); //размер поля в условных "колонках"
+        responseField.setBounds(10, 230, 260, 20); //положение и размеры
+        responseField.setText(""); //текст в поле
+        responseField.setEnabled(false); //устанавливаем полю режим readonly
         testConnectionButton = new JButton("Test connection");
-        testConnectionButton.addActionListener(new testConnectionListener());
-        testConnectionButton.setBounds(80, 270, 140, 50);
-        testConnectionButton.setFont(bigFont);
+        testConnectionButton.addActionListener(new testConnectionListener()); //добавляем кнопку теста соединения в прослушиваемые
+        testConnectionButton.setBounds(80, 270, 140, 50); //положение и размеры
+        testConnectionButton.setFont(bigFont); //устанавливаем для кнопки шрифт
         registrationButton = new JButton("Register");
-        registrationButton.addActionListener(new registrationListener());
-        registrationButton.setBounds(80, 320, 140, 50);
-        registrationButton.setFont(bigFont);
+        registrationButton.addActionListener(new registrationListener()); //добавляем кнопку регистрации в прослушиваемые
+        registrationButton.setBounds(80, 320, 140, 50); //положение и размеры
+        registrationButton.setFont(bigFont); //устанавливаем для кнопки шрифт
         changePassButton = new JButton("Change password");
-        changePassButton.addActionListener(new changePassListener());
-        changePassButton.setBounds(80, 370, 140, 50);
-        changePassButton.setFont(bigFont);
+        changePassButton.addActionListener(new changePassListener()); //добавляем кнопку смены пароля в прослушиваемые
+        changePassButton.setBounds(80, 370, 140, 50); //положение и размеры
+        changePassButton.setFont(bigFont); //устанавливаем для кнопки шрифт
+        //добавляем все элементы на главную панель:
         mainPanel.add(portNumLabel);
         mainPanel.add(portNumField);
         mainPanel.add(encryptPassLabel);
@@ -67,29 +68,29 @@ public class ClientGui {
         mainPanel.add(changePassButton);
         mainPanel.add(testConnectionButton);
 
-        frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-        frame.getContentPane().add(BorderLayout.CENTER, mainPanel);
-        frame.setSize(300,600);
-        frame.setLocationRelativeTo(null);
-        frame.setVisible(true);
+        frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE); //действие по умолчанию при закрытии окна приложения - EXIT
+        frame.getContentPane().add(BorderLayout.CENTER, mainPanel); //устанавливаем главную панель в центре компоновщика BorderLayout окна приложения
+        frame.setSize(300,600); //размер окна приложения
+        frame.setLocationRelativeTo(null); //устанавливаем окно приложения по центру экрана
+        frame.setVisible(true); //показываем окно приложения
 
-        client = new Client(responseField);
+        client = new Client(responseField); //создаем экземпляр класса клиента
     }
-    class testConnectionListener implements ActionListener {
+    class testConnectionListener implements ActionListener { //вложенный класс для метода по нажатию кнопки теста соединения
         @Override
-        public void actionPerformed(ActionEvent e) {
+        public void actionPerformed(ActionEvent e) { //метод по нажатию кнопки теста соединения
             client.testConnection();
         }
     }
-    static class registrationListener implements ActionListener {
+    static class registrationListener implements ActionListener { //вложенный класс для метода по нажатию кнопки регистрации
         @Override
-        public void actionPerformed(ActionEvent e) {
+        public void actionPerformed(ActionEvent e) { //метод по нажатию кнопки регистрации
             System.out.println("Registration Listener pressed");
         }
     }
-    static class changePassListener implements ActionListener {
+    static class changePassListener implements ActionListener { //вложенный класс для метода по нажатию кнопки смены пароля
         @Override
-        public void actionPerformed(ActionEvent e) {
+        public void actionPerformed(ActionEvent e) { //метод по нажатию кнопки смены пароля
             System.out.println("Change Password Listener pressed");
         }
     }
