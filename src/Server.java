@@ -5,12 +5,15 @@ import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
+import java.sql.SQLException;
+
 //класс банковского сервера
 public class Server {
     private ServerSocket serverSocket; //ссылка на экземпляр серверного сокета
     private Thread serverThread; //ссылка на экземпляр серверного потока
     private boolean isStarted = false; //признак работы сервера (запущен/остановлен)
     private String encryptPass; //строка с паролем для шифрования трафика
+    DBHandler dbHandler = null;
     public void startServer (int portNum, String encryptPass) { //метод для запуска сервера, на входе - пароль для шифрования трафика и номер серверного порта
         this.encryptPass = encryptPass;
         try {
@@ -19,6 +22,11 @@ public class Server {
             serverThread = new Thread(new ServerHandler()); //открываем серверный поток
             serverThread.start(); //запускаем серверный поток
             System.out.println("Server started on port " + portNum); //сообщаем в консоли о запуске сервера
+            dbHandler = DBHandler.getInstance();
+            System.out.println("Connection to DB established");
+        } catch (SQLException ex) {
+            System.out.println("SQL Exception");
+            ex.printStackTrace();
         } catch (Exception ex) {
             ex.printStackTrace();
         }
@@ -28,6 +36,11 @@ public class Server {
     public void stopServer () { //метод для останова сервера
         try {
             serverThread.interrupt(); //прерываем серверныый поток
+            dbHandler.connectionClose();
+            System.out.println("Connection to DB closed");
+        } catch (SQLException ex) {
+            System.out.println("SQL Exception");
+            ex.printStackTrace();
         } catch (Exception ex) {
             ex.printStackTrace();
         }
@@ -68,17 +81,17 @@ public class Server {
             String[] requestArray = decryptedRequest.split(";"); //разбиваем запрос на лексемы - части запроса
             if (requestArray.length != 0) {
                 if (requestArray[0].equals("simple-bank-system")) {
-                    if (requestArray[3].equals("registration") && registerClient(requestArray[1], requestArray[2])) {
-                        return "Registration - OK";
+                    if (requestArray[3].equals("registration")) {
+                        if (registerClient(requestArray[1], requestArray[2])) return "Registration - OK";
+                        else return "Registration - FAILED";
                     } else if (checkAuth(requestArray[1], requestArray[2])) {
                         System.out.println("Authorization success");
                         switch (requestArray[3]) {
                             case "test connection" -> {
-                                System.out.println("test connection case");
                                 return "Connection tested - OK";}
                             case "password changing" -> {
-                                System.out.println("password changing case");
-                                return "password changing case";}
+                                if (passwordChange(requestArray[1], requestArray[4])) return "Password change - OK";
+                                else return "Password change - FAILED";}
                             case "money transaction" -> {
                                 System.out.println("money transaction case");
                                 return "money transaction case";}
@@ -86,16 +99,47 @@ public class Server {
                                 System.out.println("Wrong parameter");
                                 return "Wrong parameter";}
                         }
-                    }
+                    } else return "Authorization - FAILED";
                 } else return "Bad request";
             }
             return "Empty request";
         }
-        private boolean registerClient (String userName, String passHash) {
-            return !userName.equals(passHash); // (заглушка)
+        private boolean registerClient (String userName, String passwordHash) {
+            try {
+                assert dbHandler != null;
+                if (dbHandler.addUser(userName, passwordHash)) {
+                    System.out.println(userName + " added to DB");
+                    return true;
+                }
+            } catch (SQLException ex) {
+                System.out.println("SQL Exception");
+                ex.printStackTrace();
+            }
+            return false;
         }
-        private boolean checkAuth (String userName, String passHash) {
-            return !userName.equals(passHash); // (заглушка)
+        private boolean checkAuth (String userName, String passwordHash) {
+            try {
+                assert dbHandler != null;
+                if (dbHandler.checkUser(userName, passwordHash)) {
+                    return true;
+                }
+            } catch (SQLException ex) {
+                System.out.println("SQL Exception");
+                ex.printStackTrace();
+            }
+            return false;
+        }
+        private boolean passwordChange (String userName, String passwordHash) {
+            try {
+                assert dbHandler != null;
+                if (dbHandler.passChange(userName, passwordHash)) {
+                    return true;
+                }
+            } catch (SQLException ex) {
+                System.out.println("SQL Exception");
+                ex.printStackTrace();
+            }
+            return false;
         }
     }
     class ServerHandler implements Runnable { //вложенный класс, содержащий задачу для серверного потока

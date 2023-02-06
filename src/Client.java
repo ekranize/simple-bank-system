@@ -10,7 +10,7 @@ public class Client {
     public Client (JTextField responseField) { //конструктор класса - на входе экземпляр поля для ответа
         this.responseField = responseField;
     }
-    public void sendRequest (int portNum, String userName, String password, String encryptPass, String parameter) { //метод для тестирования соединения
+    public void sendRequest (int portNum, String userName, String passwordHash, String encryptPass, String[] parameters) { //метод для тестирования соединения
         String response; //ответ
         BufferedReader reader; //ссылка на экземпляр класса для чтения данных из сокета
         Socket sock; //ссылка на экземпляр класса сокета
@@ -22,9 +22,13 @@ public class Client {
             isReader = new InputStreamReader(sock.getInputStream()); //создаем экземпляр класса для чтения потока данных из сокета
             reader = new BufferedReader(isReader); //создаем экземпляр класса для чтения данных из сокета
             System.out.println("networking established"); //сообщаем в консоль, что соединение установлено
-            String request = "simple-bank-system;" + userName + ";" + Helper.makeMD5(password) + ";" + parameter; //собираем строку запроса на сервер
+            StringBuilder request = new StringBuilder("simple-bank-system;" + userName + ";" + passwordHash); //собираем строку запроса на сервер
+                for (String parameter : parameters) {
+                    request.append(";");
+                    request.append(parameter);
+                }
             System.out.println("request " + request); //выводим строку запроса в консоль
-            String encryptedRequest = Helper.encrypt(request, encryptPass); //шифруем строку запроса на сервер
+            String encryptedRequest = Helper.encrypt(request.toString(), encryptPass); //шифруем строку запроса на сервер
             System.out.println("Sending encrypted request " + encryptedRequest); //выводим шифрованную строку запроса в консоль
             writer.println(encryptedRequest); //пишем в сокет строку запроса
             writer.flush(); //принудительно отправляем в сокет то, что записали выше

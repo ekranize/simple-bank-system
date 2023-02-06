@@ -9,6 +9,7 @@ public class ClientGui {
     private JTextField portNumField; //поле с номером порта для соединения к серверу
     private JTextField userNameField; //поле с именем пользователя
     private JTextField passwordField; //поле с паролем пользователя
+    private JTextField newPasswordField; //поле с новым паролем пользователя
     public void start() {
         JTextField responseField; //поле для отображения ответа от сервера
         JButton registrationButton; //кнопка регистрации в системе
@@ -54,6 +55,11 @@ public class ClientGui {
         changePassButton.addActionListener(new changePassListener()); //добавляем кнопку смены пароля в прослушиваемые
         changePassButton.setBounds(80, 370, 140, 50); //положение и размеры
         changePassButton.setFont(bigFont); //устанавливаем для кнопки шрифт
+        JLabel newPasswordLabel = new JLabel("New password"); //надпись
+        newPasswordLabel.setBounds(100, 420, 160, 30); //положение и размеры
+        newPasswordField = new JTextField(5); //размер поля в условных "колонках"
+        newPasswordField.setBounds(80, 450, 140, 20); //положение и размеры
+        newPasswordField.setText("password2"); //текст в поле
         //добавляем все элементы на главную панель:
         mainPanel.add(portNumLabel);
         mainPanel.add(portNumField);
@@ -62,7 +68,9 @@ public class ClientGui {
         mainPanel.add(userNameLabel);
         mainPanel.add(userNameField);
         mainPanel.add(passwordLabel);
+        mainPanel.add(newPasswordLabel);
         mainPanel.add(passwordField);
+        mainPanel.add(newPasswordField);
         mainPanel.add(responseField);
         mainPanel.add(registrationButton);
         mainPanel.add(changePassButton);
@@ -79,19 +87,22 @@ public class ClientGui {
     class testConnectionListener implements ActionListener { //вложенный класс для метода по нажатию кнопки теста соединения
         @Override
         public void actionPerformed(ActionEvent e) { //метод по нажатию кнопки теста соединения
-            client.sendRequest(Integer.parseInt(portNumField.getText()), userNameField.getText(), passwordField.getText(), encryptPassField.getText(), "test connection");
+            String[] parameters = {"test connection"};
+            client.sendRequest(Integer.parseInt(portNumField.getText()), userNameField.getText(), Helper.makeMD5(passwordField.getText()), encryptPassField.getText(), parameters);
         }
     }
     class registrationListener implements ActionListener { //вложенный класс для метода по нажатию кнопки регистрации
         @Override
         public void actionPerformed(ActionEvent e) { //метод по нажатию кнопки регистрации
-            client.sendRequest(Integer.parseInt(portNumField.getText()), userNameField.getText(), passwordField.getText(), encryptPassField.getText(), "registration");
+            String[] parameters = {"registration"};
+            client.sendRequest(Integer.parseInt(portNumField.getText()), userNameField.getText(), Helper.makeMD5(passwordField.getText()), encryptPassField.getText(), parameters);
         }
     }
     class changePassListener implements ActionListener { //вложенный класс для метода по нажатию кнопки смены пароля
         @Override
         public void actionPerformed(ActionEvent e) { //метод по нажатию кнопки смены пароля
-            client.sendRequest(Integer.parseInt(portNumField.getText()), userNameField.getText(), passwordField.getText(), encryptPassField.getText(), "password changing");
+            String[] parameters = {"password changing",Helper.makeMD5(newPasswordField.getText())};
+            client.sendRequest(Integer.parseInt(portNumField.getText()), userNameField.getText(), Helper.makeMD5(passwordField.getText()), encryptPassField.getText(), parameters);
         }
     }
 }
