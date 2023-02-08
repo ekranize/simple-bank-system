@@ -11,10 +11,10 @@ public class ClientGui {
     private JTextField passwordField; //поле с паролем пользователя
     private JTextField newPasswordField; //поле с новым паролем пользователя
     public void start() {
-        JTextField responseField; //поле для отображения ответа от сервера
         JButton registrationButton; //кнопка регистрации в системе
         JButton changePassButton; //кнопка смены пароля
-        JButton testConnectionButton; //кнопка теста соединения
+        JButton connectButton; //кнопка теста соединения
+        JTextField responseField; //поле для отображения ответа от сервера
         JFrame frame = new JFrame("SBS - Client"); //окно приложения
         Font bigFont = new Font("sanserif", Font.BOLD,14); //шрифт
         JPanel mainPanel = new JPanel(); //главная панель в окне приложения
@@ -43,10 +43,10 @@ public class ClientGui {
         responseField.setBounds(10, 230, 260, 20); //положение и размеры
         responseField.setText(""); //текст в поле
         responseField.setEnabled(false); //устанавливаем полю режим readonly
-        testConnectionButton = new JButton("Test connection");
-        testConnectionButton.addActionListener(new testConnectionListener()); //добавляем кнопку теста соединения в прослушиваемые
-        testConnectionButton.setBounds(80, 270, 140, 50); //положение и размеры
-        testConnectionButton.setFont(bigFont); //устанавливаем для кнопки шрифт
+        connectButton = new JButton("Connect");
+        connectButton.addActionListener(new connectListener()); //добавляем кнопку соединения в прослушиваемые
+        connectButton.setBounds(80, 270, 140, 50); //положение и размеры
+        connectButton.setFont(bigFont); //устанавливаем для кнопки шрифт
         registrationButton = new JButton("Register");
         registrationButton.addActionListener(new registrationListener()); //добавляем кнопку регистрации в прослушиваемые
         registrationButton.setBounds(80, 320, 140, 50); //положение и размеры
@@ -74,7 +74,7 @@ public class ClientGui {
         mainPanel.add(responseField);
         mainPanel.add(registrationButton);
         mainPanel.add(changePassButton);
-        mainPanel.add(testConnectionButton);
+        mainPanel.add(connectButton);
 
         frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE); //действие по умолчанию при закрытии окна приложения - EXIT
         frame.getContentPane().add(BorderLayout.CENTER, mainPanel); //устанавливаем главную панель в центре компоновщика BorderLayout окна приложения
@@ -84,25 +84,25 @@ public class ClientGui {
 
         client = new Client(responseField); //создаем экземпляр класса клиента
     }
-    class testConnectionListener implements ActionListener { //вложенный класс для метода по нажатию кнопки теста соединения
+    class connectListener implements ActionListener { //вложенный класс для метода по нажатию кнопки теста соединения
         @Override
-        public void actionPerformed(ActionEvent e) { //метод по нажатию кнопки теста соединения
-            String[] parameters = {"test connection"};
-            client.sendRequest(Integer.parseInt(portNumField.getText()), userNameField.getText(), Helper.makeMD5(passwordField.getText()), encryptPassField.getText(), parameters);
+        public void actionPerformed(ActionEvent e) { //метод по нажатию кнопки соединения
+            client.connect(Integer.parseInt(portNumField.getText()), userNameField.getText(), Helper.makeMD5(passwordField.getText()), encryptPassField.getText());
+
         }
     }
     class registrationListener implements ActionListener { //вложенный класс для метода по нажатию кнопки регистрации
         @Override
         public void actionPerformed(ActionEvent e) { //метод по нажатию кнопки регистрации
             String[] parameters = {"registration"};
-            client.sendRequest(Integer.parseInt(portNumField.getText()), userNameField.getText(), Helper.makeMD5(passwordField.getText()), encryptPassField.getText(), parameters);
+            client.sendRequest(userNameField.getText(), Helper.makeMD5(passwordField.getText()), encryptPassField.getText(), parameters);
         }
     }
     class changePassListener implements ActionListener { //вложенный класс для метода по нажатию кнопки смены пароля
         @Override
         public void actionPerformed(ActionEvent e) { //метод по нажатию кнопки смены пароля
             String[] parameters = {"password changing",Helper.makeMD5(newPasswordField.getText())};
-            client.sendRequest(Integer.parseInt(portNumField.getText()), userNameField.getText(), Helper.makeMD5(passwordField.getText()), encryptPassField.getText(), parameters);
+            client.sendRequest(userNameField.getText(), Helper.makeMD5(passwordField.getText()), encryptPassField.getText(), parameters);
         }
     }
 }

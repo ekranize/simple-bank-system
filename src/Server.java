@@ -52,6 +52,8 @@ public class Server {
     }
     class ClientHandler implements Runnable { //вложенный класс, содержащий задачу для клиентского потока
         BufferedReader reader; //ссылка на экземпляр класса для чтения данных из сокета
+        InputStreamReader isReader;
+        PrintWriter writer;
         Socket sock; //ссылка на экземпляр класса клиентского сокета
         public ClientHandler(Socket clientSocket) { //конструктор вложенного класса, на входе - сокет клиента
             sock = clientSocket;
@@ -59,19 +61,36 @@ public class Server {
         public void run() { //метод - задача для клиентского потока
             try {
                 String message; //строка - сообщение от клиента
-                InputStreamReader isReader = new InputStreamReader(sock.getInputStream()); //создаем экземпляр класса для чтения потока данных из сокета
-                PrintWriter writer = new PrintWriter(sock.getOutputStream()); //создаем экземпляр класса для записи данных в сокет
+                isReader = new InputStreamReader(sock.getInputStream()); //создаем экземпляр класса для чтения потока данных из сокета
+                writer = new PrintWriter(sock.getOutputStream()); //создаем экземпляр класса для записи данных в сокет
                 reader = new BufferedReader(isReader); //создаем экземпляр класса для чтения данных из сокета
-                message = reader.readLine(); //читаем в строку поступившее от клиента сообщение/запрос
-                writer.println(requestProcessing(message)); //отправляем сообщение/запрос на обработку отдельным методом и пишем в сокет ответ
-                writer.flush(); //принудительно отправляем в сокет то, что записали выше
-                reader.close(); //закрываем чтение данных из сокета
-                isReader.close(); //закрываем чтение потока данных из сокета
-                writer.close(); //закрываем запись данных из сокета
-                sock.close(); //закрываем сокет
-                System.out.println("Connection closed");  // выводим в консоль сообщение о закрытии соединения с данным клиентом
+                while (!sock.isClosed()) { //пока сокет не закрыт
+                    while ((message = reader.readLine()) != null) { //в цикле ждем ответа от сервера, принимаем его
+                        String processedMessage = requestProcessing(message);
+                        if (processedMessage.equals("Connection closed")) { //если ответом является успешное закрытие соединения
+                            reader.close(); //закрываем чтение данных из сокета
+                            isReader.close(); //закрываем чтение потока данных из сокета
+                            writer.close(); //закрываем запись данных из сокета
+                            sock.close(); //закрываем сокет
+                            System.out.println("Connection closed");  // выводим в консоль сообщение о закрытии соединения с данным клиентом
+                        }
+                        writer.println(processedMessage); //пишем в сокет ответ
+                        writer.flush(); //принудительно отправляем в сокет то, что записали выше
+                    }
+                }
+            } catch (SocketTimeoutException ste) {
+                System.out.println("The timeout has expired. Connection closed");
             } catch (Exception ex) {
                 ex.printStackTrace();
+            }finally {
+                try {
+                    reader.close();
+                    isReader.close();
+                    writer.close();
+                    sock.close();
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
             }
         }
         private String requestProcessing(String request) { //метод для обработки сообщения/запроса клиента, на входе - сообщение/запрос
@@ -87,8 +106,8 @@ public class Server {
                     } else if (checkAuth(requestArray[1], requestArray[2])) {
                         System.out.println("Authorization success");
                         switch (requestArray[3]) {
-                            case "test connection" -> {
-                                return "Connection tested - OK";}
+                            case "connect" -> {
+                                return "Connection established - OK";}
                             case "password changing" -> {
                                 if (passwordChange(requestArray[1], requestArray[4])) return "Password change - OK";
                                 else return "Password change - FAILED";}
@@ -148,6 +167,7 @@ public class Server {
             try {
                 while (!serverSocket.isClosed()) { //пока серверный сокет не закрыт
                     Socket clientSocket = serverSocket.accept(); //принимаем соединение от очередного клиента
+                    clientSocket.setSoTimeout(20000);
                     Thread t = new Thread(new ClientHandler(clientSocket)); //создаем отдельный клиентский поток для работы с каждым клиентом отдельно
                     t.start(); //стартуем клиентский поток
                     System.out.println("Got a connection"); //выводим в консоль сообщение об установлении соединения с клиентом
