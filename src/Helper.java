@@ -4,9 +4,14 @@ import javax.crypto.SecretKey;
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.SecretKeySpec;
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.security.MessageDigest;
 import java.security.spec.KeySpec;
 import java.util.Base64;
+import java.util.LinkedList;
+import java.util.Properties;
+
 //класс со вспомогательными для всего проекта методами
 public final class Helper {
     private static final char[] HEX_ARRAY = "0123456789ABCDEF".toCharArray(); //"константа"-массив для перевода байт в 16-чные символы
@@ -42,10 +47,8 @@ public final class Helper {
         }
         return new String(hexChars); //возвращаем массив, переведенный в строку
     }
-    public static String encrypt (String string, String encryptPass) { //метод для зашифрования сообщений, на входе - сообщение и пароль
-        String salt = "12345678"; //"соль" для алгоритма
+    public static String encrypt (String string, String encryptPass, String salt, String algorithm) { //метод для зашифрования сообщений, на входе - сообщение и пароль
         SecretKey key = getKeyFromPassword(encryptPass,salt); //создаем итоговый ключ для зашифрования из пароля и "соли"
-        String algorithm = "AES"; //алгоритм шифрования
         byte[] cipherText = null; //массив с результатом зашифрования
         try {
             Cipher cipher = Cipher.getInstance(algorithm); //создаем экземпляр класса для зашифрования
@@ -57,10 +60,8 @@ public final class Helper {
         }
         return Base64.getEncoder().encodeToString(cipherText); //возвращаем результат, преобразованный в строку
     }
-    public static String decrypt (String string, String encryptPass) { //метод для расшифрования сообщений, на входе - сообщение и пароль
-        String salt = "12345678"; //"соль" для алгоритма
+    public static String decrypt (String string, String encryptPass, String salt, String algorithm) { //метод для расшифрования сообщений, на входе - сообщение и пароль
         SecretKey key = getKeyFromPassword(encryptPass,salt); //создаем итоговый ключ для шифрования из пароля и "соли"
-        String algorithm = "AES"; //алгоритм шифрования
         byte[] plainText; //массив с результатом расшифрования
         try {
             Cipher cipher = Cipher.getInstance(algorithm); //создаем экземпляр класса для расшифрования
@@ -74,5 +75,18 @@ public final class Helper {
             return "Decrypting error (other Exception)";
         }
 
+    }
+    public static Properties getProperties (String param) {
+        ;
+        Properties properties = new Properties();
+        String configFilePath = "client_config.ini";
+        if (param.equals("server")) configFilePath = "server_config.ini";
+        try (FileInputStream fis = new FileInputStream(configFilePath)) {
+            properties.load(fis);
+        } catch (IOException ioex) {
+            System.out.println("Error reading properties file.");
+            ioex.printStackTrace();
+        }
+        return properties;
     }
 }
