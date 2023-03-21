@@ -1,14 +1,11 @@
-import org.sqlite.JDBC;
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.ConnectException;
 import java.net.Socket;
+import java.net.SocketException;
 import java.net.SocketTimeoutException;
-import java.sql.DriverManager;
-import java.sql.SQLException;
 
 //класс клиента банковской системы (моб.приложение/личный кабинет на сайте)
 public class Client {
@@ -32,6 +29,7 @@ public class Client {
             if (sock == null || sock.isClosed()) {
                 Thread readThread;
                 sock = new Socket(serverIP, portNum); //открываем сокет для соединения с сервером
+                System.out.println(sock.getLocalPort());
                 sock.setSoTimeout(soTimeout);
                 writer = new PrintWriter(sock.getOutputStream()); //создаем экземпляр класса для записи данных в сокет
                 isReader = new InputStreamReader(sock.getInputStream()); //создаем экземпляр класса для чтения потока данных из сокета
@@ -53,10 +51,11 @@ public class Client {
         }
     }
     public void disconnect () {
-        try {
+        writer.close();
+       try {
             reader.close();
+            System.out.println("test");
             isReader.close();
-            writer.close();
             sock.close();
         } catch (IOException ioex) {
             ClientMain.addToLogArea("IO Exception");
@@ -97,15 +96,14 @@ public class Client {
                 }
             } catch (SocketTimeoutException ste) {
                 System.out.println("The timeout has expired. Connection closed");
+            } catch (SocketException sex) {
+                ClientMain.addToLogArea("Connection closed");
             } catch (Exception ex) {
                 ex.printStackTrace();
             } finally {
                 try {
-                    reader.close();
-                    isReader.close();
-                    writer.close();
                     sock.close();
-                } catch (Exception ex) {
+                } catch (IOException ex) {
                     ex.printStackTrace();
                 }
             }

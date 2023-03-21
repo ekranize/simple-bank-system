@@ -34,12 +34,7 @@ public class Server {
         this.soTimeout = soTimeout;
         try {
             serverSocket = new ServerSocket(portNum); //открываем серверный сокет на нужном порту
-            serverSocket.setSoTimeout(soTimeout); //таймаут ожидания подключения ???
-            serverThread = new Thread(new ServerHandler()); //открываем серверный поток
-            serverThread.start(); //запускаем серверный поток
-            ServerMain.addToLogArea("Server started on port " + portNum); //сообщаем о запуске сервера
-            dbHandler = DBHandler.getInstance();
-            ServerMain.addToLogArea("Connection to DB established");
+            dbHandler = new DBHandler();
         } catch (SQLException ex) {
             System.out.println("Connection to DB failed");
             ex.printStackTrace();
@@ -49,31 +44,26 @@ public class Server {
         } catch (Exception ex) {
             ex.printStackTrace();
         }
+        ServerMain.addToLogArea("Server started on port " + portNum); //сообщаем о запуске сервера
+        ServerMain.addToLogArea("Connection to DB established");
+
         isStarted = true; //выставляем признак запуска сервера - запущен
+        new ServerHandler().start();
     }
-    public void stopServer () { //метод для останова сервера
+    public void stopServer() { //метод для останова сервера
+        if (isStarted) isStarted = false;
         try {
-            serverThread.interrupt(); //прерываем серверный поток
-            dbHandler.connectionClose();
-            ServerMain.addToLogArea("Connection to DB closed");
             serverSocket.close();
-            ServerMain.addToLogArea("Server stopped");
-        } catch (SQLException ex) {
-            ServerMain.addToLogArea("SQL Exception");
-            ex.printStackTrace();
-        } catch (Exception ex) {
-            ex.printStackTrace();
+        } catch (IOException ioex) {
+            ServerMain.addToLogArea("Closing server socket failed");
+            ioex.printStackTrace();
         }
-        isStarted = false; //выставляем признак запуска сервера - остановлен
     }
 
     public boolean isStarted() { //метод для проверки признака запуска сервера
         return isStarted;
     }
-    class ClientHandler implements Runnable { //вложенный класс, содержащий задачу для клиентского потока
-        private BufferedReader reader; //ссылка на экземпляр класса для чтения данных из сокета
-        private InputStreamReader isReader;
-        private PrintWriter writer;
+    class ClientHandler extends Thread { //вложенный класс, содержащий задачу для клиентского потока
         private final Socket sock; //ссылка на экземпляр класса клиентского сокета
         private ClientHandler(Socket clientSocket) { //конструктор вложенного класса, на входе - сокет клиента
             this.sock = clientSocket;
@@ -81,22 +71,19 @@ public class Server {
         public void run() { //метод - задача для клиентского потока
             try {
                 String message; //строка - сообщение от клиента
-                isReader = new InputStreamReader(sock.getInputStream()); //создаем экземпляр класса для чтения потока данных из сокета
-                writer = new PrintWriter(sock.getOutputStream()); //создаем экземпляр класса для записи данных в сокет
-                reader = new BufferedReader(isReader); //создаем экземпляр класса для чтения данных из сокета
-                while (!sock.isClosed()) { //пока сокет не закрыт
-                    while ((message = reader.readLine()) != null) { //в цикле ждем ответа от сервера, принимаем его
-                        String processedMessage = requestProcessing(message);
-                        writer.println(processedMessage); //пишем в сокет ответ
-                        writer.flush(); //принудительно отправляем в сокет то, что записали выше
-                    }
+                PrintWriter writer = new PrintWriter(sock.getOutputStream()); //создаем экземпляр класса для записи данных в сокет
+                BufferedReader reader = new BufferedReader(new InputStreamReader(sock.getInputStream())); //создаем экземпляр класса для чтения данных из сокета
+                while ((message = reader.readLine()) != null) { //в цикле ждем ответа от сервера, принимаем его
+                    String processedMessage = requestProcessing(message);
+                    writer.println(processedMessage); //пишем в сокет ответ
+                    writer.flush(); //принудительно отправляем в сокет то, что записали выше
                 }
-            } catch (SocketTimeoutException ste) {
-                ServerMain.addToLogArea("The timeout has expired. Client connection closed");
-            } catch (SocketException sex) {
-                ServerMain.addToLogArea("Client disconnected. Connection closed");
-            } catch (Exception ex) {
-                ex.printStackTrace();
+                writer.close();
+                reader.close();
+                sock.close();
+            } catch (IOException ioex) {
+                ServerMain.addToLogArea("Reading requests/writing responses failed");
+                ioex.printStackTrace();
             }
         }
         private synchronized String requestProcessing(String request) { //метод для обработки сообщения/запроса клиента, на входе - сообщение/запрос
@@ -148,33 +135,30 @@ public class Server {
             return "Empty request";
         }
     }
-    class ServerHandler implements Runnable { //вложенный класс, содержащий задачу для серверного потока
-        @Override
+    class ServerHandler extends Thread { //вложенный класс, содержащий задачу для серверного потока
         public void run() { //метод - задача для серверного потока
-            try {
-                while (!serverSocket.isClosed()) { //пока серверный сокет не закрыт
-                    Socket clientSocket = serverSocket.accept(); //принимаем соединение от очередного клиента
-                    clientSocket.setSoTimeout(soTimeout);
-                    Thread t = new Thread(new ClientHandler(clientSocket)); //создаем отдельный клиентский поток для работы с каждым клиентом отдельно
-                    t.start(); //стартуем клиентский поток
-                    ServerMain.addToLogArea("Got a client connection"); //выводим в консоль сообщение об установлении соединения с клиентом
-                }
-            } catch (SocketTimeoutException stoEx) { //таймаут серверного сокета сработал?
-                if (!serverThread.isInterrupted()) run(); //если серверный поток не прерван - стартуем еще раз задачу для серверного потока
-                else { //иначе
-                    try {
-                        serverSocket.close(); //закрываем к чертям серверный сокет
-                        ServerMain.addToLogArea("Server stopped (timeout expired)"); //выводим в консоль сообщение о том, что сервер преван (поток прерван)
-                    } catch (IOException ioEx) {
-                        ioEx.printStackTrace();
+            while (isStarted) {
+                try {
+                    new ClientHandler(serverSocket.accept()).start();
+                }  catch (IOException e) {
+                    if (isStarted) {
+                        e.printStackTrace();
                     }
                 }
-            } catch (SocketException sex) {
-                System.out.println("Socket closed");
-                //sex.printStackTrace();
-            } catch (Exception ex) {
+            }
+            try {
+                serverSocket.close();
+                dbHandler.connectionClose();
+            } catch (IOException ioex) {
+                ServerMain.addToLogArea("Closing serverSocket failed");
+                ioex.printStackTrace();
+            } catch (SQLException ex) {
+                ServerMain.addToLogArea("SQL Exception");
                 ex.printStackTrace();
             }
+            ServerMain.addToLogArea("Server stopped");
+            ServerMain.addToLogArea("Connection to DB terminated");
+
         }
     }
 }

@@ -2,21 +2,32 @@ import org.sqlite.JDBC;
 import java.sql.*;
 public final class DBHandler {
     private static final String CON_STR = "jdbc:sqlite:database.db"; // Константа, в которой хранится адрес подключения
-    private static DBHandler instance = null;
     private Statement statement = null;
     private ResultSet resultSet = null;
     private final Connection connection; // Объект, в котором будет храниться соединение с БД
-    public static DBHandler getInstance() throws SQLException {  // Используем шаблон одиночка
-        if (instance == null)
-            instance = new DBHandler();
-        return instance;
-    }
-    private DBHandler() throws SQLException {
+    public DBHandler() throws SQLException {
         DriverManager.registerDriver(new JDBC());  // Регистрируем драйвер, с которым будем работать (Sqlite)
         this.connection = DriverManager.getConnection(CON_STR); // Выполняем подключение к базе данных
     }
     public void connectionClose () throws SQLException {
-        this.connection.close();
+        if (connection != null && !connection.isClosed()) {
+            Statement statement = null;
+            try {
+                statement = connection.createStatement();
+                statement.close();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            } finally {
+                if (statement != null) {
+                    try {
+                        statement.close();
+                    } catch (SQLException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+            connection.close();
+        }
     }
     public boolean registerClient (String userName, String passwordHash) throws SQLException {
         statement = connection.createStatement();

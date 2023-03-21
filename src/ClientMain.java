@@ -1,4 +1,5 @@
 import javax.swing.*;
+import javax.swing.text.DefaultCaret;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -121,6 +122,8 @@ public class ClientMain {
         logArea = new JTextArea(20,15);
         logArea.setLineWrap(true);
         logArea.setEnabled(false);
+        DefaultCaret caret = (DefaultCaret)logArea.getCaret();
+        caret.setUpdatePolicy(DefaultCaret.ALWAYS_UPDATE);
         JScrollPane logPane = new JScrollPane(logArea);
         logPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
         //добавляем все элементы на центральную панель:
