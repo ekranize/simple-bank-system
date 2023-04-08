@@ -64,11 +64,11 @@ public class ClientMain {
         JLabel userNameLabel = new JLabel("userName:");
         userNameField = new JTextField(5); //размер поля в условных "колонках"
         userNameField.setMaximumSize(new Dimension(200,20));
-        userNameField.setText("user1"); //текст в поле
+        userNameField.setText(userName); //текст в поле
         JLabel passwordLabel = new JLabel("password:");
         passwordField = new JPasswordField(5); //размер поля в условных "колонках"
         passwordField.setMaximumSize(new Dimension(200,20));
-        passwordField.setText("password1"); //текст в поле
+        passwordField.setText(password); //текст в поле
         connectButton = new JButton("Connect");
         connectButton.addActionListener(new connectListener()); //добавляем кнопку соединения в прослушиваемые
         connectButton.setFont(bigFont); //устанавливаем для кнопки шрифт
@@ -163,7 +163,7 @@ public class ClientMain {
         @Override
         public void actionPerformed(ActionEvent e) { //метод по нажатию кнопки соединения
             if (portNum <= 65536 && portNum >=1025) { //если с введенным номером порта все в порядке
-                client.connect(serverIP, portNum, encryptPass, workString, soTimeout, userName, Helper.makeMD5(password), salt, algorithm);
+                client.connect(serverIP, portNum, encryptPass, workString, soTimeout, userNameField.getText(), Helper.makeMD5(passwordField.toString()), salt, algorithm);
             }
         }
     }

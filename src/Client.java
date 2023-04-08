@@ -30,7 +30,7 @@ public class Client {
                 Thread readThread;
                 sock = new Socket(serverIP, portNum); //открываем сокет для соединения с сервером
                 System.out.println(sock.getLocalPort());
-                sock.setSoTimeout(soTimeout);
+                //sock.setSoTimeout(soTimeout);
                 writer = new PrintWriter(sock.getOutputStream()); //создаем экземпляр класса для записи данных в сокет
                 isReader = new InputStreamReader(sock.getInputStream()); //создаем экземпляр класса для чтения потока данных из сокета
                 reader = new BufferedReader(isReader); //создаем экземпляр класса для чтения данных из сокета
